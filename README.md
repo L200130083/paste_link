@@ -2,7 +2,8 @@
 put links into one short URL
 <br>
 this application is built with PHP, javascript jQuery, css, jadePHP and materialize CSS, and SQLite3. database admin using phplitedmin. and also using ion_auth for codeigniter library, however, this library is not currently used in this web application XD.
-this web application is not done yet and still have a lot of bugs add way too simple.
+<br>
+this web application is not done yet and still have a lot of bugs and way too simple.
 and this is my very first time using jadePHP template engine with PHP.
 <br>
 warning : my codes might dangerous for your eyes due to my bad coding style and ugly algorithm XD
