@@ -5,6 +5,6 @@ this application is built with PHP, javascript jQuery, css, jadePHP and material
 this web application is not done yet and still have a lot of bugs add way too simple.
 and this is my very first time using jadePHP template engine with PHP.
 <br>
-<font color="yellow">warning : my codes might dangerous for your eyes due to my bad coding style and ugly algorithm XD</font>
+warning : my codes might dangerous for your eyes due to my bad coding style and ugly algorithm XD
 <br>>
 tested and run well in my localhost with php 5.6
