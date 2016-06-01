@@ -1,0 +1,221 @@
+extends layout.jade
+block headcss
+ script.
+   var js_site_title = '#{site_config("site_title");}';
+   var js_base_url = '#{base_url}';
+   var js_site_url = '#{site_url}';
+   var js_csrf_token = '#{csrf_token}';
+   var js_csrf_hash = '#{csrf_hash}';
+block container-top
+  .row#preloader.center
+    .preloader-wrapper.big.active
+      .spinner-layer.spinner-blue-only
+          .circle-clipper.left
+            .circle
+          .gap-patch
+            .circle
+          .circle-clipper.right
+            .circle
+  .row#mainform
+    form(action=site_url.'/home/submit', method='POST', onSubmit="return false",id="urlform")
+      input(name=csrf_token, value=csrf_hash, type="hidden", id="csrf")
+      .row
+        #title.input-field.col.s12
+          input(type='text', name='title', required, id="title")
+          label(for="title") Paste title
+      .row
+        .input-field.col.s12
+          textarea#links.materialize-textarea(name='url', required)
+          label(for="links") Enter your links here, one link per line
+      .row
+        .input-field.col.s12
+          input#passbox(type="checkbox")
+          label(for="passbox") add password?
+      .row
+        #input_password.input-field.col.s12(style='display:none')
+          input(type='password', name='password')
+          label(for="input_password") Password
+      .row.center
+        .input-field.col.s12
+          input.waves-effect.waves-light.btn(type='submit', name='submit', value='GENERATE')
+  .row#result
+    .col.s6.offset-s3
+      .row
+        .card-panel.deep-orange.darken-1
+          .row
+            .white-text.center
+              h5#res-paste-url
+      ul#itercontent.collection.with-header
+          li#li-title.truncate.collection-item.active
+            h4.center Loading..    
+  .row#reqpass 
+    .col.s6.offset-s3
+      .row
+        .card-panel.deep-orange.darken-1
+          .row
+            .col.l8.white-text
+              h5(id="paste-name")                     
+              h6(id="paste-url")
+      .row
+        #gp_field.input-field
+          input(type='password', id="given_password", required)
+          label(for="gp_filed") Password
+      input#alias(type="hidden");
+      .row.center
+        .input-field
+          input#unlock.waves-effect.waves-light.btn(type='submit', value="UNLOCK")
+block resources
+  script.
+   var unlock = null;
+    var use_password = jQuery('#passbox');
+    use_password.on('click', function(){
+      if (use_password.is(':checked')){
+        jQuery('#input_password').fadeIn('slow');
+      }else{
+        jQuery('#input_password').fadeOut('slow');
+        jQuery('#input_password').val("");
+      }
+    });
+    jQuery("#unlock").on("click", function(event){
+      unlock = jQuery("#given_password").val();
+      window.location.hash = 'refresh';
+    });
+    jQuery("#urlform").submit(function(event){
+      jQuery("#mainform").hide();
+      jQuery("#result").hide();
+      jQuery("#reqpass").hide();
+      jQuery("#preloader").fadeIn('slow');
+      event.preventDefault();
+      var data = jQuery(this).serialize();
+      var posting = jQuery.post(jQuery.trim(js_site_url)+'/home/submit', data);
+      posting.fail(function(data){
+        try{
+          var data = jQuery.parseJSON(data);
+          jQuery("#csrf").val(data.csrf_hash);
+        }catch(e){
+          Materialize.toast("Request Failed, Try to reload the page", 4000);
+        }
+      });
+      posting.done(function(data){
+        try{
+        var data = jQuery.parseJSON(data);
+          if (data.error == 1){
+            Materialize.toast('Error : ' + data.msg, 4000);
+            jQuery("#mainform").fadeIn('slow');
+          }else{
+            Materialize.toast("Success", 4000);
+            window.location = '#'+data.data.alias;
+          }
+           jQuery("#csrf").val(data.csrf_hash);
+           js_csrf_hash = data.csrf_hash;
+
+        }catch(e){
+          console.log(e);
+          Materialize.toast("Request Failed, Try to reload the page", 4000);
+        }
+      });
+      posting.always(function(data){
+        jQuery("#preloader").hide();
+      });
+    });
+    //router
+    routie({
+        'login':function(){
+          
+          return false;
+        },
+        'refresh':function(){
+          var alias = jQuery("#alias").val();
+          if(/\W/.test(alias) || alias.length === 0){
+              $("form").trigger('reset');
+              jQuery("#result").hide();
+              jQuery("#preloader").hide();
+              jQuery("#mainform").fadeIn('slow');
+              jQuery("#links").val("");
+              return;
+            }
+            window.location.hash = alias;
+        },
+        '*' : function(par){
+          jQuery("#reqpass").hide();
+            //check if hash value is alfanum [[a-zA-Z0-9_] == \w] or empty?
+            if(/\W/.test(par) || par.length === 0){
+              //Materialize.toast("going home", 4000);
+              $("form").trigger('reset');
+              jQuery("#result").hide();
+              jQuery("#preloader").hide();
+              jQuery("#mainform").fadeIn('slow');
+              jQuery("#links").val("");
+              return;
+            }
+            //console.log(unlock);
+            jQuery("#mainform").hide();
+            jQuery("#preloader").show();
+            jQuery("#result").hide();
+            var post_data = jQuery.trim(js_csrf_token)+'='+jQuery.trim(js_csrf_hash)+'&alias='+par;
+            if (unlock != null){
+              post_data = post_data + '&password='+unlock;
+            }
+            var req = jQuery.post(jQuery.trim(js_site_url)+'/home/visit', post_data);
+            req.fail(function(data){
+              //console.log(post_data);
+              console.log(data);
+              try{
+                var data = jQuery.parseJSON(data);
+                jQuery("#csrf").val(data.csrf_hash);
+                js_csrf_hash = data.csrf_hash;
+              }catch(e){
+                Materialize.toast("Request Failed, Try to reload the page", 4000);
+              }
+            });
+            req.done(function(data){
+              //console.log(data);
+              try{
+                var data = jQuery.parseJSON(data);
+              }catch(e){
+                console.log(e);
+                Materialize.toast("Error : Parsing JSON failed", 4000);
+                return;
+              }
+              if (data.error == 0){
+                jQuery("#res-paste-url").html(jQuery.trim(js_site_url)+'#'+data.data.alias);
+                jQuery("#li-title").html('<h5 class="center">'+data.data.title+'</h5>');
+                //this is the url alias
+                jQuery("#li-title").attr('href', '#'+data.data.alias);
+                var li_title = jQuery("#li-title");
+                jQuery("#itercontent").html(""); //reset itercontent list
+                jQuery("#itercontent").append(li_title); //append the title of lists [header]
+                jQuery("#res-url").val(jQuery.trim(js_site_url)+'#'+data.data.alias); //ppaste url
+                for(var i = 0;i < data.data.links.length;i++){
+                  var inn = '<div>'+data.data.links[i]+'<a target="_BLANK" href="'+(isValidURI(data.data.links[i])?data.data.links[i]:'#')+'" class="secondary-content"><i class="material-icons">send</i></a></div>';
+                  var htlink = "<li style='opacity:0;' class='truncate collection-item'>"+inn+"</li>";
+                  jQuery("#itercontent").append(htlink);
+                  jQuery("#result").fadeIn('slow');
+                }
+                Materialize.showStaggeredList('#itercontent');
+              }
+              else if (data.error == 2){
+                jQuery("#result").hide();
+                jQuery("#mainform").hide();
+                jQuery("#paste-url").html(jQuery.trim(js_site_url)+'#'+data.data.alias);
+                jQuery("#paste-name").html(data.data.title);
+                jQuery("#alias").val(data.data.alias);
+                jQuery("#reqpass").fadeIn('slow');            
+              }else if (data.error == 4){
+                Materialize.toast(data.msg, 4000);
+                jQuery("#mainform").fadeIn('slow');
+              }else if (data.error == 3){
+                Materialize.toast(data.msg, 4000);
+                jQuery("#reqpass").fadeIn('slow');  
+              }
+              jQuery("#csrf").val(data.csrf_hash);
+              js_csrf_hash = data.csrf_hash;
+              document.title = data.data.title+' - '+js_site_title;
+            });
+            req.always(function(data){
+              jQuery("#preloader").hide();
+              //jQuery("#mainform").hide();
+              //jQuery("#result").fadeIn('slow');
+            });
+        } 
+    });

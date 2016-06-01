@@ -1,0 +1,22 @@
+{
+    "name": "ci-jade/ci-jade",
+    "description": "HAML-like template engine for CodeIgniter",
+    "keywords": ["jade", "minification", "template"],
+    "homepage": "https://github.com/ci-jade/ci-jade",
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "kylekatarnls",
+            "homepage": "http://github.com/kylekatarnls",
+            "role": "Maintainer"
+        }
+    ],
+    "require": {
+        "php": ">=5.4.0",
+        "kylekatarnls/jade-php": "~1.1"
+    },
+    "autoload": {
+        "psr-0": { "": "src/" }
+    }
+}
